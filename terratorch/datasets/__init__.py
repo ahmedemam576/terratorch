@@ -42,6 +42,7 @@ from terratorch.datasets.utils import HLSBands, OpticalBands, SARBands
 
 #from terratorch.datasets.sen1floods11 import Sen1Floods11NonGeo
 from terratorch.datasets.sen4agrinet import Sen4AgriNet
+from terratorch.datasets.tiled_dataset_wrapper import TiledDataset
 
 from terratorch.datasets.burn_intensity import BurnIntensityNonGeo
 from terratorch.datasets.carbonflux import CarbonFluxNonGeo
@@ -106,6 +107,7 @@ __all__ = (
     "OpenSentinelMap",
     "PASTIS",
     "Sen4AgriNet",
+    "TiledDataset",
     "WSF2019",
     "WSFEvolution",
     "HLSL30",

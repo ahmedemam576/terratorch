@@ -37,7 +37,8 @@ from .modality_info import MODALITY_INFO
 
 
 def build_tim_modality_embeddings(modalities, tim_modalities, img_size=None, dim=None, patch_size=None):
-    mod_embeddings, mod_name_mapping = build_modality_embeddings(MODALITY_INFO, modalities, img_size, dim, patch_size)
+    mod_embeddings, mod_name_mapping = build_modality_embeddings(
+        MODALITY_INFO, modalities, img_size=img_size, dim=dim, patch_size=patch_size)
 
     for modality in tim_modalities:
         # Cover multiple naming conventions

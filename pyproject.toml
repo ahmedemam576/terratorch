@@ -7,7 +7,7 @@ include = ["terratorch*"]
 
 [project]
 name = "terratorch"
-version = "v1.2.4"
+version = "v1.2.5"
 description = "TerraTorch - The geospatial foundation model fine-tuning toolkit"
 license = { "text" = "Apache License, Version 2.0" }
 readme = "README.md"
@@ -29,7 +29,9 @@ authors = [
   { name = "Raunak Bhansali"},
   { name = "Takao Moriyama"},
   { name = "Þorsteinn Elí Gíslason"},
-  { name = "Isabelle Wittmann"}
+  { name = "Isabelle Wittmann"},
+  { name = "Christian Pinto"},
+  { name = "Rosie Lickorish"}
 ]
 classifiers = [
 #  "Development Status :: 2 - Pre-Alpha",

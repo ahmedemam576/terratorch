@@ -884,43 +884,42 @@ def build_modality_embeddings(modality_info, modalities, cond_modalities=None, i
                         f"Modalities must be provided as a list of strings and dicts. "
                         f"The strings can be any pre-trained modality: "
                         f"RGB, S2L1C, S2L2A, S1RTC, S1GRD, DEM, LULC, NDVI, Coords. "
-                        f'Dicts define new modalities with the format {{"<name>": <num_channels>}}. '
+                        f"Dicts define new modalities with the format {{'<name>': <num_channels>}}."
                         f"Found {key}: {value} ({type(value)})"
                     )
                 mod_name_mapping[key] = key
             continue
 
         # Cover multiple naming conventions
-
         modality_renamed = (modality.lower()
-                            .replace('s2', 'sen2')
-                            .replace('s1', 'sen1')
-                            .replace('location', 'coords')
+                            .replace("s2", "sen2")
+                            .replace("s1", "sen1")
+                            .replace("location", "coords")
                             )
 
         # Get modality key in MODALITY_INFO
         if modality in modality_info.keys():
             key = modality
-        elif 'sen2l2a' in modality_renamed:
-            key = 'untok_sen2l2a@224'
-        elif 'sen2l1c' in modality_renamed:
-            key = 'untok_sen2l1c@224'
-        elif 'sen1rtc' in modality_renamed:
-            key = 'untok_sen1rtc@224'
-        elif 'sen1' in modality_renamed:  # Defaults to S1GRD if not specified
-            key = 'untok_sen1grd@224'
-        elif 'rgb' in modality_renamed:
-            key = 'untok_sen2rgb@224'
-        elif 'dem' in modality_renamed:
-            key = 'untok_dem@224'
-        elif 'lulc' in modality_renamed:
-            key = 'tok_lulc@224'
-        elif 'ndvi' in modality_renamed:
-            key = 'tok_ndvi@224'
-        elif 'caption' in modality_renamed:
-            key = 'caption'
-        elif 'coord' in modality_renamed:
-            key = 'coords'
+        elif "sen2l2a" in modality_renamed:
+            key = "untok_sen2l2a@224"
+        elif "sen2l1c" in modality_renamed:
+            key = "untok_sen2l1c@224"
+        elif "sen1rtc" in modality_renamed:
+            key = "untok_sen1rtc@224"
+        elif "sen1" in modality_renamed:  # Defaults to S1GRD if not specified
+            key = "untok_sen1grd@224"
+        elif "rgb" in modality_renamed:
+            key = "untok_sen2rgb@224"
+        elif "dem" in modality_renamed:
+            key = "untok_dem@224"
+        elif "lulc" in modality_renamed:
+            key = "tok_lulc@224"
+        elif "ndvi" in modality_renamed:
+            key = "tok_ndvi@224"
+        elif "caption" in modality_renamed:
+            key = "caption"
+        elif "coord" in modality_renamed:
+            key = "coords"
         else:
             raise NotImplementedError(f"Could not find modality {modality} in default modality info.")
 
@@ -933,35 +932,35 @@ def build_modality_embeddings(modality_info, modalities, cond_modalities=None, i
         for modality in cond_modalities:
             # Cover multiple naming conventions
             modality_renamed = (modality.lower()
-                                .replace('s2', 'sen2')
-                                .replace('s1', 'sen1')
-                                .replace('location', 'coords')
+                                .replace("s2", "sen2")
+                                .replace("s1", "sen1")
+                                .replace("location", "coords")
                                 )
 
             # Get modality key in MODALITY_INFO
             if modality in modality_info.keys():
                 key = modality
-            elif 'sen2' in modality_renamed:
-                key = 'tok_sen2l2a@224'
-            elif 'sen1rtc' in modality_renamed:
-                key = 'tok_sen1rtc@224'
-            elif 'sen1' in modality_renamed:  # Defaults to S1GRD if not specified
-                key = 'tok_sen1grd@224'
-            elif 'dem' in modality_renamed:
-                key = 'tok_dem@224'
-            elif 'lulc' in modality_renamed:
-                key = 'tok_lulc@224'
-            elif 'ndvi' in modality_renamed:
-                key = 'tok_ndvi@224'
-            elif 'caption' in modality_renamed:
-                key = 'caption'
-            elif 'coords' in modality_renamed:
-                key = 'coords'
+            elif "sen2" in modality_renamed:
+                key = "tok_sen2l2a@224"
+            elif "sen1rtc" in modality_renamed:
+                key = "tok_sen1rtc@224"
+            elif "sen1" in modality_renamed:  # Defaults to S1GRD if not specified
+                key = "tok_sen1grd@224"
+            elif "dem" in modality_renamed:
+                key = "tok_dem@224"
+            elif "lulc" in modality_renamed:
+                key = "tok_lulc@224"
+            elif "ndvi" in modality_renamed:
+                key = "tok_ndvi@224"
+            elif "caption" in modality_renamed:
+                key = "caption"
+            elif "coords" in modality_renamed:
+                key = "coords"
             else:
-                raise NotImplementedError(f'Could not find modality {modality} in default modality info.')
+                raise NotImplementedError(f"Could not find modality {modality} in default modality info.")
 
             mod_info = modality_info[key]
-            mod_embeddings[key] = mod_info['encoder_embedding'](image_size=img_size, dim_tokens=dim, **mod_info)
+            mod_embeddings[key] = mod_info["encoder_embedding"](image_size=img_size, dim_tokens=dim, **mod_info)
 
     return mod_embeddings, mod_name_mapping
 
@@ -972,30 +971,30 @@ def build_output_modality_embeddings(modality_info, modalities, img_size=None, d
     for modality in modalities:
         # Cover multiple naming conventions
         modality_renamed = (modality.lower()
-                            .replace('s2', 'sen2')
-                            .replace('s1', 'sen1')
-                            .replace('location', 'coords')
+                            .replace("s2", "sen2")
+                            .replace("s1", "sen1")
+                            .replace("location", "coords")
                             )
 
         # Get modality key in MODALITY_INFO
         if modality in modality_info.keys():
             key = modality
-        elif 'sen2' in modality_renamed:
-            key = 'tok_sen2l2a@224'
-        elif 'sen1rtc' in modality_renamed:
-            key = 'tok_sen1rtc@224'
-        elif 'sen1' in modality_renamed:  # Defaults to S1GRD if not specified
-            key = 'tok_sen1grd@224'
-        elif 'dem' in modality_renamed:
-            key = 'tok_dem@224'
-        elif 'lulc' in modality_renamed:
-            key = 'tok_lulc@224'
-        elif 'ndvi' in modality_renamed:
-            key = 'tok_ndvi@224'
-        elif 'caption' in modality_renamed:
-            key = 'caption'
-        elif 'coord' in modality_renamed:
-            key = 'coords'
+        elif "sen2" in modality_renamed:
+            key = "tok_sen2l2a@224"
+        elif "sen1rtc" in modality_renamed:
+            key = "tok_sen1rtc@224"
+        elif "sen1" in modality_renamed:  # Defaults to S1GRD if not specified
+            key = "tok_sen1grd@224"
+        elif "dem" in modality_renamed:
+            key = "tok_dem@224"
+        elif "lulc" in modality_renamed:
+            key = "tok_lulc@224"
+        elif "ndvi" in modality_renamed:
+            key = "tok_ndvi@224"
+        elif "caption" in modality_renamed:
+            key = "caption"
+        elif "coord" in modality_renamed:
+            key = "coords"
         else:
             raise NotImplementedError(
                 f"Could not find modality {modality} in default modality info."

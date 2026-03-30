@@ -77,7 +77,7 @@ with TiledDataset, which tiles images/masks on-the-fly with disk caching.
 **See Also:**
     - TiledDataset: Underlying dataset wrapper
     - docs/tiling_datamodule_wrapper.md: Comprehensive documentation
-    - examples/utils/tiling_datamodule_example.py: Usage examples
+    - examples/notebooks/tiling_datamodule_tutorial.ipynb: Usage examples
     - scripts/inference_stitching_demo.py: End-to-end demo
 """
 

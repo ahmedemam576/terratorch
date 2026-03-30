@@ -110,6 +110,56 @@ To get started, check out the [quick start guide](https://terrastackai.github.io
 
 Developers, check out the [architecture overview](https://terrastackai.github.io/terratorch/architecture).
 
+### Data Tiling for Large Images
+
+TerraTorch provides a generic tiling solution for handling large images that addresses padding compatibility issues:
+
+**TilingDataModuleWrapper** - Wraps any DataModule to add automatic tiling with disk caching and inference stitching.
+
+**Key Features:**
+- 🎯 **Solves padding compatibility:** Models trained with one padding style work correctly with different padding
+- ⚡ **Disk caching:** Tiles cached on first run for fast repeated access
+- 🔧 **Flexible:** Variable tile sizes with custom collation support
+- 🖼️ **Complete inference:** Includes prediction stitching with smooth blending
+
+**Quick Example:**
+```python
+from terratorch.datamodules import TilingDataModuleWrapper
+
+# Wrap any existing datamodule
+tiled_dm = TilingDataModuleWrapper(
+    base_datamodule=your_datamodule,
+    tile_size=(512, 512),
+    overlap=64,
+    cache_dir="./tile_cache",
+)
+
+# Use with Lightning Trainer
+trainer = Trainer(max_epochs=10)
+trainer.fit(model, tiled_dm)
+
+# Inference with stitching
+predictions, coords = [], []
+for batch in tiled_dm.predict_dataloader():
+    preds = model(batch["image"])
+    predictions.append(preds)
+    coords.extend(batch["tile_coords"])
+
+# Stitch back into full image
+full_pred = TilingDataModuleWrapper.stitch_predictions(
+    tile_predictions=torch.cat(predictions),
+    tile_coords=coords,
+    original_size=(1024, 1024),
+    overlap=64,
+    use_blending=True,
+)
+```
+
+**Documentation:**
+- 📖 [Full guide](docs/tiling_datamodule_wrapper.md)
+- 💡 [Examples](examples/notebooks/tiling_datamodule_tutorial.ipynb)
+- 🎬 [Demo script](scripts/inference_stitching_demo.py)
+
 [TerraTorch: The Geospatial Foundation Models Toolkit on arXiv](https://arxiv.org/abs/2503.20563)
 ## Contributing
 

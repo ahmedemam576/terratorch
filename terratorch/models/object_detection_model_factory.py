@@ -142,7 +142,6 @@ class ObjectDetectionModelFactory(ModelFactory):
                 **framework_kwargs,
             )
         elif framework == "retinanet":
-    elif framework == "retinanet":
             sizes = (
                 (16, 20, 25),
                 (32, 40, 50),

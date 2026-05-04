@@ -111,11 +111,6 @@ To get started, check out the [quick start guide](https://terrastackai.github.io
 Developers, check out the [architecture overview](https://terrastackai.github.io/terratorch/architecture).
 
 
-**Documentation:**
-- 📖 [Full guide](docs/tiling_datamodule_wrapper.md)
-- 💡 [Examples](examples/notebooks/tiling_datamodule_tutorial.ipynb)
-- 🎬 [Demo script](scripts/inference_stitching_demo.py)
-
 [TerraTorch: The Geospatial Foundation Models Toolkit on arXiv](https://arxiv.org/abs/2503.20563)
 ## Contributing
 

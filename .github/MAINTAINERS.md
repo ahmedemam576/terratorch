@@ -7,6 +7,7 @@ This document lists the Maintainers of the Project. Maintainers may be added onc
 | Romeo Kienzler | @romeokienzler | IBM Research         |
 | Isabelle Wittmann | @Isabelle-Wittmann  | IBM Research |
 | Benedikt Blumenstiel | @blumenstiel | IBM Research     |
+| Ahmed Emam | @ahmedemam576 | IBM Research              |
 ---
 
 Part of MVG-0.1-beta.

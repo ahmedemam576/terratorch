@@ -94,6 +94,23 @@ TerraTorch requires gdal to be installed, which can be quite a complex process.
 If you don't have GDAL set up on your system, we recommend using a conda
 environment and installing it with `conda install -c conda-forge gdal`. If you
 are installing from `conda-forge` it probably won't be a problem. 
+### Optional Dependencies
+
+#### Deformable DETR
+Some advanced object detection tests use the Deformable DETR variant, 
+which requires compiling CUDA operators for `MultiScaleDeformableAttention`.
+
+**Note:** Core DETR functionality works without this extension. 
+Deformable DETR tests will be gracefully skipped if the operators are not compiled.
+
+To enable Deformable DETR support, compile the CUDA operators:
+```bash
+git clone https://github.com/fundamentalvision/Deformable-DETR.git
+cd Deformable-DETR/models/ops
+sh make.sh
+```
+
+**Requirements:** Linux, CUDA ≥ 9.2, GCC ≥ 5.4
 
 ### Install as a developer
 To install as a developer (e.g. to extend the library):

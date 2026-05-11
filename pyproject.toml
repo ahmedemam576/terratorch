@@ -140,6 +140,10 @@ peft = [
   "peft>=0.15.0"
 ]
 
+rfdetr = [
+  "rfdetr>=1.6.5.post0,<2",
+]
+
 geobenchv2 = [
   "geobenchv2==0.9",
   "mlflow",

@@ -464,6 +464,63 @@ class TerraTorchRFDETR(nn.Module):
     pure-PyTorch MSDeformAttn (no CUDA extension needed).
     """
 
+    class _BackboneAdapter(nn.Module):
+        """Adapt TerraTorch BackboneWrapper to RF-DETR Joiner-like contract.
+
+        Upstream RF-DETR `LWDETR` expects a backbone module that accepts a
+        NestedTensor and returns `(features, pos)` where:
+        - features: list of NestedTensor objects
+        - pos: list of positional encodings in [B, C, H, W]
+        """
+
+        def __init__(self, backbone, input_proj, position_embedding, num_feature_levels: int):
+            super().__init__()
+            self.backbone = backbone
+            self.input_proj = input_proj
+            self.position_embedding = position_embedding
+            self.num_feature_levels = num_feature_levels
+
+        def _resized_mask(self, base_mask: Tensor | None, src: Tensor) -> Tensor:
+            if base_mask is None:
+                return torch.zeros(src.shape[0], src.shape[2], src.shape[3], dtype=torch.bool, device=src.device)
+            return torch.nn.functional.interpolate(base_mask[None].float(), size=src.shape[-2:]).to(torch.bool)[0]
+
+        def forward(self, tensor_list):
+            from rfdetr.utilities.tensors import NestedTensor as RFDETRNestedTensor  # noqa: PLC0415
+
+            images = tensor_list.tensors
+            base_mask = tensor_list.mask
+
+            features = self.backbone(images)
+            if isinstance(features, OrderedDict):
+                feature_list = list(features.values())
+            else:
+                feature_list = features
+
+            out = []
+            pos = []
+
+            for lvl, feat in enumerate(feature_list):
+                src = self.input_proj[lvl](feat)
+                mask = self._resized_mask(base_mask, src)
+                nested = RFDETRNestedTensor(src, mask)
+                out.append(nested)
+                pos.append(self.position_embedding(nested, align_dim_orders=False).to(src.dtype))
+
+            if self.num_feature_levels > len(feature_list):
+                _len_srcs = len(feature_list)
+                for lvl in range(_len_srcs, self.num_feature_levels):
+                    if lvl == _len_srcs:
+                        src = self.input_proj[lvl](feature_list[-1])
+                    else:
+                        src = self.input_proj[lvl](out[-1].tensors)
+                    mask = self._resized_mask(base_mask, src)
+                    nested = RFDETRNestedTensor(src, mask)
+                    out.append(nested)
+                    pos.append(self.position_embedding(nested, align_dim_orders=False).to(src.dtype))
+
+            return out, pos
+
     def __init__(
         self,
         backbone: nn.Module,
@@ -497,15 +554,23 @@ class TerraTorchRFDETR(nn.Module):
         mask_dice_loss_coef: float = 5.0,
     ):
         super().__init__()
-        from terratorch.models.detr.rfdetr.lwdetr import LWDETR  # noqa: PLC0415
-        from terratorch.models.detr.rfdetr.lwdetr import PostProcess as RFDETRPostProcess  # noqa: PLC0415
-        from terratorch.models.detr.rfdetr.lwdetr import SetCriterion as RFDETRSetCriterion  # noqa: PLC0415
-        from terratorch.models.detr.rfdetr.matcher import HungarianMatcher as RFDETRMatcher  # noqa: PLC0415
-        from terratorch.models.detr.rfdetr.position_encoding import (  # noqa: PLC0415
-            PositionEmbeddingSine as RFDETRPositionEmbedding,
-        )
-        from terratorch.models.detr.rfdetr.segmentation_head import SegmentationHead  # noqa: PLC0415
-        from terratorch.models.detr.rfdetr.transformer import Transformer as RFDETRTransformer  # noqa: PLC0415
+        try:
+            from rfdetr.models.criterion import SetCriterion as RFDETRSetCriterion  # noqa: PLC0415
+            from rfdetr.models.heads.segmentation import SegmentationHead  # noqa: PLC0415
+            from rfdetr.models.lwdetr import LWDETR  # noqa: PLC0415
+            from rfdetr.models.matcher import HungarianMatcher as RFDETRMatcher  # noqa: PLC0415
+            from rfdetr.models.position_encoding import (  # noqa: PLC0415
+                PositionEmbeddingSine as RFDETRPositionEmbedding,
+            )
+            from rfdetr.models.postprocess import PostProcess as RFDETRPostProcess  # noqa: PLC0415
+            from rfdetr.models.transformer import Transformer as RFDETRTransformer  # noqa: PLC0415
+        except ImportError as exc:
+            msg = (
+                "RF-DETR support requires the optional 'rfdetr' dependency. "
+                "Install it with 'pip install terratorch[rfdetr]' or "
+                "'pip install -e .[rfdetr]'."
+            )
+            raise ImportError(msg) from exc
 
         self.backbone = backbone
         self.num_classes = num_classes
@@ -542,6 +607,13 @@ class TerraTorchRFDETR(nn.Module):
         # Sinusoidal positional encoding (shared across levels)
         self.position_embedding = RFDETRPositionEmbedding(d_model // 2, normalize=True)
 
+        self.backbone_adapter = self._BackboneAdapter(
+            backbone=backbone,
+            input_proj=self.input_proj,
+            position_embedding=self.position_embedding,
+            num_feature_levels=n_levels,
+        )
+
         # Segmentation head (optional)
         seg_head_module = SegmentationHead(d_model, num_decoder_layers) if segmentation_head else None
 
@@ -562,8 +634,9 @@ class TerraTorchRFDETR(nn.Module):
             bbox_reparam=bbox_reparam,
         )
 
-        # Build LWDETR model (no backbone - we handle that)
+        # Build upstream LWDETR model with TerraTorch backbone adapter.
         self.lwdetr = LWDETR(
+            self.backbone_adapter,
             transformer,
             seg_head_module,
             num_classes=num_classes,
@@ -625,41 +698,8 @@ class TerraTorchRFDETR(nn.Module):
         """
         bs, _, img_h, img_w = images.shape
 
-        # Extract multi-scale features from backbone
-        features = self.backbone(images)
-        if isinstance(features, OrderedDict):
-            feature_list = list(features.values())
-        else:
-            feature_list = features
-
-        # Project each backbone level and collect spatial info
-        srcs = []
-        masks = []
-        pos_embeds = []
-        for lvl, feat in enumerate(feature_list):
-            src = self.input_proj[lvl](feat)
-            mask = torch.zeros(src.shape[0], src.shape[2], src.shape[3], dtype=torch.bool, device=src.device)
-            pos = self.position_embedding(src)
-            srcs.append(src)
-            masks.append(mask)
-            pos_embeds.append(pos)
-
-        # Generate extra feature levels beyond backbone outputs
-        if self.num_feature_levels > len(feature_list):
-            _len_srcs = len(feature_list)
-            for lvl in range(_len_srcs, self.num_feature_levels):
-                if lvl == _len_srcs:
-                    src = self.input_proj[lvl](feature_list[-1])
-                else:
-                    src = self.input_proj[lvl](srcs[-1])
-                mask = torch.zeros(src.shape[0], src.shape[2], src.shape[3], dtype=torch.bool, device=src.device)
-                pos = self.position_embedding(src, mask)
-                srcs.append(src)
-                masks.append(mask)
-                pos_embeds.append(pos)
-
-        # Run LWDETR model
-        outputs = self.lwdetr(srcs, masks, pos_embeds)
+        # Run upstream LWDETR model (it builds NestedTensor flow internally).
+        outputs = self.lwdetr(images)
 
         if self.training:
             if targets is None:

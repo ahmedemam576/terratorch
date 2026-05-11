@@ -747,6 +747,9 @@ class TestDETRWrapperParity(unittest.TestCase):
 # ---------------------------------------------------------------------------
 
 
+pytest.importorskip("rfdetr", reason="RF-DETR optional dependency is not installed")
+
+
 class TestRFDETRFactory(unittest.TestCase):
     """Test building RF-DETR via the factory."""
 

@@ -96,6 +96,19 @@ environment and installing it with `conda install -c conda-forge gdal`. If you
 are installing from `conda-forge` it probably won't be a problem. 
 ### Optional Dependencies
 
+#### RF-DETR
+RF-DETR integration is optional and depends on the upstream `rfdetr` package.
+
+Install optional RF-DETR support with:
+```bash
+pip install terratorch[rfdetr]
+```
+
+For contributors using editable installs:
+```bash
+pip install -e .[test,rfdetr]
+```
+
 #### Deformable DETR
 Some advanced object detection tests use the Deformable DETR variant, 
 which requires compiling CUDA operators for `MultiScaleDeformableAttention`.

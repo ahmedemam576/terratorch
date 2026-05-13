@@ -904,16 +904,19 @@ class TestRFDETRComponents(unittest.TestCase):
     """Test individual RF-DETR components for correctness."""
 
     def test_rfdetr_position_encoding_deterministic(self):
-        from terratorch.models.detr.rfdetr.position_encoding import PositionEmbeddingSine  # noqa: PLC0415
+        from rfdetr.models.position_encoding import PositionEmbeddingSine  # noqa: PLC0415
+        from rfdetr.utilities.tensors import NestedTensor  # noqa: PLC0415
 
         pe = PositionEmbeddingSine(64, normalize=True)
         x = torch.randn(2, 128, 16, 16)
-        out1 = pe(x)
-        out2 = pe(x)
+        mask = torch.zeros(2, 16, 16, dtype=torch.bool)
+        nt = NestedTensor(x, mask)
+        out1 = pe(nt, align_dim_orders=False)
+        out2 = pe(nt, align_dim_orders=False)
         assert torch.allclose(out1, out2), "Position encoding should be deterministic"
 
     def test_rfdetr_matcher_valid_indices(self):
-        from terratorch.models.detr.rfdetr.matcher import HungarianMatcher  # noqa: PLC0415
+        from rfdetr.models.matcher import HungarianMatcher  # noqa: PLC0415
 
         matcher = HungarianMatcher(cost_class=1, cost_bbox=5, cost_giou=1)
         outputs = {
@@ -932,7 +935,7 @@ class TestRFDETRComponents(unittest.TestCase):
         assert len(indices[1][1]) == 1
 
     def test_rfdetr_transformer_output_shape(self):
-        from terratorch.models.detr.rfdetr.transformer import Transformer  # noqa: PLC0415
+        from rfdetr.models.transformer import Transformer  # noqa: PLC0415
 
         t = Transformer(
             d_model=64,
@@ -949,7 +952,7 @@ class TestRFDETRComponents(unittest.TestCase):
             bbox_reparam=False,
         )
         # Mimic LWDETR: attach bbox_embed for iterative refinement
-        from terratorch.models.detr.rfdetr.transformer import MLP  # noqa: PLC0415
+        from rfdetr.models.transformer import MLP  # noqa: PLC0415
 
         t.decoder.bbox_embed = MLP(64, 64, 4, 3)
 
@@ -966,8 +969,8 @@ class TestRFDETRComponents(unittest.TestCase):
         assert hs_enc is None  # two_stage=False
 
     def test_rfdetr_setcriterion_loss_keys(self):
-        from terratorch.models.detr.rfdetr.lwdetr import SetCriterion  # noqa: PLC0415
-        from terratorch.models.detr.rfdetr.matcher import HungarianMatcher  # noqa: PLC0415
+        from rfdetr.models.criterion import SetCriterion  # noqa: PLC0415
+        from rfdetr.models.matcher import HungarianMatcher  # noqa: PLC0415
 
         matcher = HungarianMatcher(cost_class=2, cost_bbox=5, cost_giou=2)
         criterion = SetCriterion(
@@ -991,7 +994,7 @@ class TestRFDETRComponents(unittest.TestCase):
         assert "loss_giou" in losses
 
     def test_rfdetr_postprocess_output_keys(self):
-        from terratorch.models.detr.rfdetr.lwdetr import PostProcess  # noqa: PLC0415
+        from rfdetr.models.postprocess import PostProcess  # noqa: PLC0415
 
         pp = PostProcess(num_select=10)
         outputs = {
@@ -1010,7 +1013,7 @@ class TestRFDETRComponents(unittest.TestCase):
             assert r["boxes"].shape[1] == 4
 
     def test_rfdetr_segmentation_head_forward(self):
-        from terratorch.models.detr.rfdetr.segmentation_head import SegmentationHead  # noqa: PLC0415
+        from rfdetr.models.heads.segmentation import SegmentationHead  # noqa: PLC0415
 
         seg_head = SegmentationHead(in_dim=64, num_blocks=2)
         spatial_features = torch.randn(2, 64, 16, 16)
